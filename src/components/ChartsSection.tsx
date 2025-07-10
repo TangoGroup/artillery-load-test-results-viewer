@@ -2,14 +2,16 @@
 
 import { ArtilleryLog, SummaryStats } from "@/types/artillery";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar, ReferenceLine, Legend } from "recharts";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface ChartsSectionProps {
   data: ArtilleryLog;
+  activeIndex?: number | null;
+  onMouseMove?: (index: number | null) => void;
 }
 
-export function ChartsSection({ data }: ChartsSectionProps) {
+export function ChartsSection({ data, activeIndex, onMouseMove }: ChartsSectionProps) {
   // Detect data type: browser automation vs traditional HTTP
   const isBrowserData = data.intermediate.some(entry => 
     Object.keys(entry.counters).some(key => key.startsWith("browser."))
@@ -45,7 +47,7 @@ export function ChartsSection({ data }: ChartsSectionProps) {
   };
 
   // Prepare time series data
-  const timeSeriesData = data.intermediate.map((entry, index) => {
+  const allTimeSeriesData = data.intermediate.map((entry, index) => {
     const timestamp = new Date(entry.firstCounterAt).toLocaleTimeString();
     const periodSeconds = calculatePeriodSeconds(entry);
     
@@ -85,6 +87,9 @@ export function ChartsSection({ data }: ChartsSectionProps) {
     };
   });
 
+  // Use all time series data (no filtering)
+  const timeSeriesData = allTimeSeriesData;
+
   // HTTP status codes data
   const httpCodesData = Object.entries(data.aggregate.counters)
     .filter(([key]) => key.startsWith("http.codes.") || key.startsWith("browser.page.codes."))
@@ -117,24 +122,39 @@ export function ChartsSection({ data }: ChartsSectionProps) {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={timeSeriesData}>
+              <LineChart 
+                data={timeSeriesData}
+                onMouseMove={(e) => {
+                  if (e && e.activeLabel && onMouseMove) {
+                    const index = timeSeriesData.findIndex(item => item.time === e.activeLabel);
+                    onMouseMove(index >= 0 ? index : null);
+                  }
+                }}
+                onMouseLeave={() => onMouseMove && onMouseMove(null)}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis dataKey="time" stroke="#9CA3AF" />
                 <YAxis stroke="#9CA3AF" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1F2937', 
-                    border: '1px solid #374151',
-                    borderRadius: '6px'
-                  }}
-                />
                 <Line 
                   type="monotone" 
                   dataKey="httpRequestRate" 
                   stroke="#3B82F6" 
                   strokeWidth={2}
                   dot={false}
+                  name="Request Rate"
                 />
+                <Legend 
+                  wrapperStyle={{ paddingTop: '20px' }}
+                  iconType="line"
+                />
+                {activeIndex !== null && activeIndex !== undefined && (
+                  <ReferenceLine 
+                    x={timeSeriesData[activeIndex]?.time} 
+                    stroke="#FF6B6B" 
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                  />
+                )}
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -147,21 +167,35 @@ export function ChartsSection({ data }: ChartsSectionProps) {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={timeSeriesData}>
+              <LineChart 
+                data={timeSeriesData}
+                onMouseMove={(e) => {
+                  if (e && e.activeLabel && onMouseMove) {
+                    const index = timeSeriesData.findIndex(item => item.time === e.activeLabel);
+                    onMouseMove(index >= 0 ? index : null);
+                  }
+                }}
+                onMouseLeave={() => onMouseMove && onMouseMove(null)}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis dataKey="time" stroke="#9CA3AF" />
                 <YAxis stroke="#9CA3AF" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1F2937', 
-                    border: '1px solid #374151',
-                    borderRadius: '6px'
-                  }}
+                <Line type="monotone" dataKey="vusCreated" stroke="#10B981" strokeWidth={2} dot={false} name="Created" />
+                <Line type="monotone" dataKey="vusActive" stroke="#3B82F6" strokeWidth={2} dot={false} name="Active" />
+                <Line type="monotone" dataKey="vusCompleted" stroke="#8B5CF6" strokeWidth={2} dot={false} name="Completed" />
+                <Line type="monotone" dataKey="vusFailed" stroke="#EF4444" strokeWidth={2} dot={false} name="Failed" />
+                <Legend 
+                  wrapperStyle={{ paddingTop: '20px' }}
+                  iconType="line"
                 />
-                <Line type="monotone" dataKey="vusCreated" stroke="#10B981" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="vusActive" stroke="#3B82F6" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="vusCompleted" stroke="#8B5CF6" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="vusFailed" stroke="#EF4444" strokeWidth={2} dot={false} />
+                {activeIndex !== null && activeIndex !== undefined && (
+                  <ReferenceLine 
+                    x={timeSeriesData[activeIndex]?.time} 
+                    stroke="#FF6B6B" 
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                  />
+                )}
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -176,21 +210,35 @@ export function ChartsSection({ data }: ChartsSectionProps) {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={timeSeriesData}>
+              <LineChart 
+                data={timeSeriesData}
+                onMouseMove={(e) => {
+                  if (e && e.activeLabel && onMouseMove) {
+                    const index = timeSeriesData.findIndex(item => item.time === e.activeLabel);
+                    onMouseMove(index >= 0 ? index : null);
+                  }
+                }}
+                onMouseLeave={() => onMouseMove && onMouseMove(null)}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis dataKey="time" stroke="#9CA3AF" />
                 <YAxis stroke="#9CA3AF" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1F2937', 
-                    border: '1px solid #374151',
-                    borderRadius: '6px'
-                  }}
+                <Line type="monotone" dataKey="responseTimeP50" stroke="#10B981" strokeWidth={2} dot={false} name="P50" />
+                <Line type="monotone" dataKey="responseTimeP95" stroke="#F59E0B" strokeWidth={2} dot={false} name="P95" />
+                <Line type="monotone" dataKey="responseTimeP99" stroke="#EF4444" strokeWidth={2} dot={false} name="P99" />
+                <Line type="monotone" dataKey="responseTimeMax" stroke="#7C3AED" strokeWidth={2} dot={false} name="Max" />
+                <Legend 
+                  wrapperStyle={{ paddingTop: '20px' }}
+                  iconType="line"
                 />
-                <Line type="monotone" dataKey="responseTimeP50" stroke="#10B981" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="responseTimeP95" stroke="#F59E0B" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="responseTimeP99" stroke="#EF4444" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="responseTimeMax" stroke="#7C3AED" strokeWidth={2} dot={false} />
+                {activeIndex !== null && activeIndex !== undefined && (
+                  <ReferenceLine 
+                    x={timeSeriesData[activeIndex]?.time} 
+                    stroke="#FF6B6B" 
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                  />
+                )}
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -204,21 +252,35 @@ export function ChartsSection({ data }: ChartsSectionProps) {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={timeSeriesData}>
+                <LineChart 
+                  data={timeSeriesData}
+                  onMouseMove={(e) => {
+                    if (e && e.activeLabel && onMouseMove) {
+                      const index = timeSeriesData.findIndex(item => item.time === e.activeLabel);
+                      onMouseMove(index >= 0 ? index : null);
+                    }
+                  }}
+                  onMouseLeave={() => onMouseMove && onMouseMove(null)}
+                >
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="time" stroke="#9CA3AF" />
                   <YAxis stroke="#9CA3AF" />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#1F2937', 
-                      border: '1px solid #374151',
-                      borderRadius: '6px'
-                    }}
-                  />
                   <Line type="monotone" dataKey="fcpP50" stroke="#10B981" strokeWidth={2} dot={false} name="FCP P50" />
                   <Line type="monotone" dataKey="fcpP95" stroke="#F59E0B" strokeWidth={2} dot={false} name="FCP P95" />
                   <Line type="monotone" dataKey="lcpP50" stroke="#3B82F6" strokeWidth={2} dot={false} name="LCP P50" />
                   <Line type="monotone" dataKey="lcpP95" stroke="#EF4444" strokeWidth={2} dot={false} name="LCP P95" />
+                  <Legend 
+                    wrapperStyle={{ paddingTop: '20px' }}
+                    iconType="line"
+                  />
+                  {activeIndex !== null && activeIndex !== undefined && (
+                    <ReferenceLine 
+                      x={timeSeriesData[activeIndex]?.time} 
+                      stroke="#FF6B6B" 
+                      strokeWidth={2}
+                      strokeDasharray="5 5"
+                    />
+                  )}
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
@@ -230,20 +292,34 @@ export function ChartsSection({ data }: ChartsSectionProps) {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={timeSeriesData}>
+                <LineChart 
+                  data={timeSeriesData}
+                  onMouseMove={(e) => {
+                    if (e && e.activeLabel && onMouseMove) {
+                      const index = timeSeriesData.findIndex(item => item.time === e.activeLabel);
+                      onMouseMove(index >= 0 ? index : null);
+                    }
+                  }}
+                  onMouseLeave={() => onMouseMove && onMouseMove(null)}
+                >
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="time" stroke="#9CA3AF" />
                   <YAxis stroke="#9CA3AF" />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#1F2937', 
-                      border: '1px solid #374151',
-                      borderRadius: '6px'
-                    }}
+                  <Line type="monotone" dataKey="sessionLengthMean" stroke="#10B981" strokeWidth={2} dot={false} name="Mean" />
+                  <Line type="monotone" dataKey="sessionLengthP95" stroke="#F59E0B" strokeWidth={2} dot={false} name="P95" />
+                  <Line type="monotone" dataKey="sessionLengthP99" stroke="#EF4444" strokeWidth={2} dot={false} name="P99" />
+                  <Legend 
+                    wrapperStyle={{ paddingTop: '20px' }}
+                    iconType="line"
                   />
-                  <Line type="monotone" dataKey="sessionLengthMean" stroke="#10B981" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="sessionLengthP95" stroke="#F59E0B" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="sessionLengthP99" stroke="#EF4444" strokeWidth={2} dot={false} />
+                  {activeIndex !== null && activeIndex !== undefined && (
+                    <ReferenceLine 
+                      x={timeSeriesData[activeIndex]?.time} 
+                      stroke="#FF6B6B" 
+                      strokeWidth={2}
+                      strokeDasharray="5 5"
+                    />
+                  )}
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
@@ -265,13 +341,6 @@ export function ChartsSection({ data }: ChartsSectionProps) {
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis dataKey="code" stroke="#9CA3AF" />
                 <YAxis stroke="#9CA3AF" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1F2937', 
-                    border: '1px solid #374151',
-                    borderRadius: '6px'
-                  }}
-                />
                 <Bar dataKey="count" fill="#3B82F6" />
               </BarChart>
             </ResponsiveContainer>
